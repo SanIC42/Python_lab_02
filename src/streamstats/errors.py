@@ -1,14 +1,18 @@
 class StreamStatsError(Exception):
-    pass
+    """Базовая ошибка пакета"""
 
-class UnsupportedFormat(StreamStatsError):
-    pass
 
-class WrongEvent(StreamStatsError):
-    pass
+class UnsupportedFormatError(StreamStatsError):
+    """Неподдерживаемый формат входного файла"""
 
-class WrongTimeStamp(StreamStatsError):
-    pass
 
-class CLIconfError(StreamStatsError):
-    pass
+class InvalidEventError(StreamStatsError):
+    """Неверное событие: не хватает поля, неверный уровень, битый JSON и т. п."""
+
+
+class InvalidTimestampError(StreamStatsError):
+    """Неверная временная метка."""
+
+
+class CLIConfigError(StreamStatsError):
+    """Ошибка конфигурации CLI (например, выходной файл уже существует)."""
