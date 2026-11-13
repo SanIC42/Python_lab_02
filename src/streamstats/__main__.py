@@ -13,8 +13,10 @@ def main():
 
     analyze.add_argument(
         "inputs",
-        metavar="INPUT",  # подсказка в терминале
-        nargs="+",  # для ввода нескольких аргументов
+        # подсказка в терминале
+        metavar="INPUT",
+        # для ввода нескольких аргументов
+        nargs="+",
         help="путь к входному файлу (можно указать несколько)",
     )
     analyze.add_argument(
@@ -25,7 +27,8 @@ def main():
     )
     analyze.add_argument(
         "--output",
-        metavar="REPORT.json",  # подсказка в терминале
+        # подсказка в терминале
+        metavar="REPORT.json",
         help="путь к файлу отчёта (если не указан, отчёт выводится в stdout)",
     )
     analyze.add_argument(

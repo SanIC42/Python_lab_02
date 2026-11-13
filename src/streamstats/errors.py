@@ -7,12 +7,12 @@ class UnsupportedFormatError(StreamStatsError):
 
 
 class InvalidEventError(StreamStatsError):
-    """Неверное событие: не хватает поля, неверный уровень, битый JSON и т. п."""
+    """Неверное событие (некорректное количество полей, неверные данные столбца)"""
 
 
 class InvalidTimestampError(StreamStatsError):
-    """Неверная временная метка."""
+    """Неверная временная метка"""
 
 
 class CLIConfigError(StreamStatsError):
-    """Ошибка конфигурации CLI (например, выходной файл уже существует)."""
+    """Ошибка конфигурации CLI (выходной файл уже существует, входной файл не найден)"""
