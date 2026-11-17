@@ -15,4 +15,15 @@ class InvalidTimestampError(StreamStatsError):
 
 
 class CLIConfigError(StreamStatsError):
-    """Ошибка конфигурации CLI (выходной файл уже существует, входной файл не найден)"""
+    """Ошибка конфигурации CLI"""
+
+
+class InputNotFoundError(StreamStatsError):
+    """Входной файл не найден"""
+
+class OutputAlreadyExistError(StreamStatsError):
+    """Выхрдной файл уже сущействует"""
+
+
+class InvalidInputsError(StreamStatsError):
+    """Форматы файлов и --format отличаются"""
