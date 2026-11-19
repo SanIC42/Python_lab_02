@@ -1,7 +1,7 @@
 import csv
+import datetime
 import json
 import os
-from datetime import datetime
 
 from .errors import (
     InputNotFoundError,
@@ -9,12 +9,13 @@ from .errors import (
     InvalidInputsError,
     InvalidTimestampError,
     OutputAlreadyExistError,
+    UnknownFieldError,
     UnsupportedFormatError,
 )
 
 
 def CLI_validation(inputs: list[str], format: str, output: str) -> None:
-    """проверка аргументов строки на валидность"""
+    """Проверка аргументов строки на валидность"""
 
     # Ошибка 1. Неподдерживаемый формат
     if format not in ["csv", "jsonl"]:
@@ -32,7 +33,7 @@ def CLI_validation(inputs: list[str], format: str, output: str) -> None:
         raise OutputAlreadyExistError
 
     # Ошибка 4. Форматы файлов и --format отличаются
-    if any(file[file.rfind(".") + 1:] != format for file in inputs):
+    if any(file[file.rfind(".") + 1 :] != format for file in inputs):
         raise InvalidInputsError
 
 
@@ -40,6 +41,10 @@ def files_validation(file_name: str, file_type: str, skip_invalid: bool) -> None
     """Проверка файла на корректность"""
 
     if file_type == "csv":
+        # пропуск при наличии флага --skip-invalid
+        if skip_invalid:
+            return
+
         with open(file=file_name, encoding="utf-8") as file:
             reader = csv.reader(file, delimiter=",")
 
@@ -48,39 +53,41 @@ def files_validation(file_name: str, file_type: str, skip_invalid: bool) -> None
 
             for line in reader:
                 # Ошибка 1. Неверное событие
-                if len(line) != 4:
+                if len(line) < 4:
                     raise InvalidEventError
+
+                # Ошибка 2. Неизвестное поле
+                if len(line) > 4:
+                    raise UnknownFieldError
 
                 timestamp, level, source, message = line
 
-                # Ошибка 2. Неверная временная метка
+                # Ошибка 3. Неверная временная метка
                 try:
-                    if not datetime.fromisoformat(timestamp):
+                    if not datetime.datetime.fromisoformat(timestamp):
                         raise InvalidTimestampError
                 except ValueError:
                     raise InvalidTimestampError
 
     elif file_type == "jsonl":
+        # пропуск при наличии флага --skip-invalid
+        if skip_invalid:
+            return
+
         with open(file=file_name, encoding="utf-8") as file:
             for line in file:
                 try:
-
-                    try:
-                        data = json.loads(line)
-                        timestamp, level, source, message = (
-                            data.get("timestamp", 0),
-                            data.get("level", 0),
-                            data.get("source", 0),
-                            data.get("message", 0),
-                        )
-                    
-                    # Ошибка 1. Неверное событие
-                    except json.decoder.JSONDecodeError:
-                        raise InvalidEventError
+                    data = json.loads(line)
+                    timestamp, level, source, message = (
+                        data["timestamp"],
+                        data["level"],
+                        data["source"],
+                        data["message"],
+                    )
 
                     # Ошибка 1. Неверное событие
                     if (
-                        len(data) != 4
+                        len(data) < 4
                         or (not timestamp)
                         or (not level)
                         or (not source)
@@ -88,19 +95,21 @@ def files_validation(file_name: str, file_type: str, skip_invalid: bool) -> None
                     ):
                         raise InvalidEventError
 
-                    # Ошибка 2. Неверная временная метка
-                    try:
-                        if not datetime.fromisoformat(timestamp):
-                            raise InvalidTimestampError
-                    except ValueError:
+                    # Ошибка 2. Неизвестное поле
+                    if len(data) > 4:
+                        raise UnknownFieldError
+
+                # Ошибка 1. Неверное событие
+                except json.decoder.JSONDecodeError:
+                    raise InvalidEventError
+
+                # Ошибка 3. Неверная временная метка
+                try:
+                    if not datetime.datetime.fromisoformat(timestamp):
                         raise InvalidTimestampError
+                except ValueError:
+                    raise InvalidTimestampError
 
-                # Пропуск при наличии флага --skip-invalid
-                except (InvalidEventError, InvalidTimestampError):
-                    if skip_invalid:
-                        pass
-
-
-    # Ошибка 3. Неверный формат входного файла
+    # Ошибка 4. Неверный формат входного файла
     else:
         raise UnsupportedFormatError

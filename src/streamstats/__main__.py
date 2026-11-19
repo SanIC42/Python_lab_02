@@ -1,18 +1,29 @@
 import argparse
+import logging
 import sys
 
+from .analysis import data_calculation, report
 from .errors import (
     InputNotFoundError,
     InvalidEventError,
     InvalidInputsError,
     InvalidTimestampError,
+    MixedAwareNaiveError,
     OutputAlreadyExistError,
+    UnknownFieldError,
     UnsupportedFormatError,
 )
 from .parsers import CLI_validation, files_validation
+from .report import make_report
 
 
 def main():
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(levelname)s: %(message)s",
+        stream=sys.stderr,
+    )
+
     parser = argparse.ArgumentParser(prog="python -m streamstats")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -43,7 +54,7 @@ def main():
         type=str,
         # подсказка в терминале
         metavar="REPORT.json",
-        help="путь к файлу отчёта",
+        help="путь к json-файлу отчёта",
     )
     analyze.add_argument(
         "--skip-invalid",
@@ -55,34 +66,54 @@ def main():
     args = parser.parse_args()
 
     try:
+        # валидация ввода пользователя
         CLI_validation(args.inputs, args.format, args.output)
-        print(args.inputs)
+
+        # валидация файлов
         for file in args.inputs:
             files_validation(file, args.format, args.skip_invalid)
-            print(file)
 
-    except InputNotFoundError:
-        print("Входной файл не найден")
+        # анализ файлов для отчёта
+        for file in args.inputs:
+            data_calculation(file, args.format, args.skip_invalid)
+
+        # формирование отчёта
+        make_report(report, args.output)
+
+    except InputNotFoundError as e:
+        print(e, file=sys.stderr)
         sys.exit(2)
 
-    except OutputAlreadyExistError:
-        print("Выходной файл уже существует")
+    except OutputAlreadyExistError as e:
+        print(e, file=sys.stderr)
         sys.exit(2)
 
-    except InvalidInputsError:
-        print("Форматы файлов и --format отличаются")
+    except InvalidInputsError as e:
+        print(e, file=sys.stderr)
         sys.exit(2)
 
-    except UnsupportedFormatError:
-        print("Неподдерживаемый формат файла")
+    except UnsupportedFormatError as e:
+        print(e, file=sys.stderr)
         sys.exit(2)
 
-    except InvalidEventError:
-        print("Неверное событие")
+    except UnknownFieldError as e:
+        print(e, file=sys.stderr)
         sys.exit(2)
 
-    except InvalidTimestampError:
-        print("Неверная временная метка")
+    except InvalidEventError as e:
+        print(e, file=sys.stderr)
+        sys.exit(2)
+
+    except InvalidTimestampError as e:
+        print(e, file=sys.stderr)
+        sys.exit(2)
+
+    except MixedAwareNaiveError as e:
+        print(e, file=sys.stderr)
+        sys.exit(2)
+
+    except Exception as e:  # noqa: BLE001
+        print(e, file=sys.stderr)
         sys.exit(2)
 
 

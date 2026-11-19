@@ -14,12 +14,17 @@ class InvalidTimestampError(StreamStatsError):
     """Неверная временная метка"""
 
 
-class CLIConfigError(StreamStatsError):
-    """Ошибка конфигурации CLI"""
+class UnknownFieldError(StreamStatsError):
+    """Неизвестное поле"""
+
+
+class MixedAwareNaiveError(StreamStatsError):
+    """Смешивание aware и naive временных меток (aware - с тайм зоной, naive - без неё)"""
 
 
 class InputNotFoundError(StreamStatsError):
     """Входной файл не найден"""
+
 
 class OutputAlreadyExistError(StreamStatsError):
     """Выхрдной файл уже сущействует"""
